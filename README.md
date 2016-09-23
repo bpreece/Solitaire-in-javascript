@@ -96,13 +96,13 @@ Here's the idea:  for every possible position of any card on the table, we'll de
 classes that specify its position in the browser window.  For example, if a card is to be 
 located in the tableau in row 3 of column 2, we'll set the card element's class like this:
 
-```
+```html
 <div class="card tableau col-2 row-3>...</div>
 ```
 
 and define a corresponding style in the CSS, including the transition properties:
 
-```
+```css
 .tableau.col-2.row-3 { left: 146px; top: 230px; z-index: 3; transition: 0.25s; }
 ```
 
@@ -114,7 +114,7 @@ other cards below it in the same column.
 Now, to move a card to different location, say column 7, row 4 of the tableau, all we need to 
 do is set its `className`:
 
-```
+```javascript
 card.className = "card tableau col-7 row-4";
 ```
 
@@ -124,7 +124,7 @@ position!
 We're going to be just a little more sophisticate than this, but not much.  We'll set the 
 transition time for all the positions at once:
 
-```
+```css
 .card.tableau.col-1, .card.tableau.col-2, .card.tableau.col-3, .tableau.col-4, 
 .card.tableau.col-5, .card.tableau.col-6, .card.tableau.col-7,
 .card.tableau.row-1, .card.tableau.row-2, .card.tableau.row-3, .tableau.row-4, 
@@ -138,7 +138,7 @@ the row, so we can handle the left position separately:
 
 * Hello
 
-```
+```css
 .tableau.col-1 { left: 0; }
 .tableau.col-2 { left: 146px; }
 .tableau.col-3 { left: 292px; }
@@ -150,7 +150,7 @@ the row, so we can handle the left position separately:
 
 Then we need to set the top positions for each of the rows:
 
-```
+```css
 .tableau.row-1 { top: 220px; z-index: 1; }
 .tableau.row-2 { top: 225px; z-index: 2; }
 .tableau.row-3 { top: 230px; z-index: 3; }
@@ -162,7 +162,7 @@ Then we need to set the top positions for each of the rows:
 
 Now to deal cards from the stock onto the tableau, this will work:
 
-```
+```javascript
 for (var row = 1; row <= 7; row++) {
     for (var col = row; col <= 7; col++) {
         var card = this.stock.pop();
@@ -180,7 +180,7 @@ Of course, this moves all the cards at once.  It would be nice to animate them, 
 like the cards are actually being dealt.  We use `setTimeout()` to spread out the card 
 movements:
 
-```
+```javascript
 for (var row = 1, timeout = 0; row <= 7; row++) {
     for (var col = row; col <= 7; col++, timeout += 50) {
         (function(row, col, timeout) {
@@ -206,7 +206,7 @@ card is the first face-up card in the column (i.e. lowest face-up card in the st
 has the class `up-1`.  The second is `up-2`, and so on.  Then we need CSS styles to position 
 them, in every possible combination of `row-`* and `up-`*.
 
-```
+```css
 ...
 .tableau.row-3 { top: 230px; z-index: 3; }
 .tableau.row-3.up-2 { top: 260px; }
@@ -216,7 +216,7 @@ them, in every possible combination of `row-`* and `up-`*.
 
 and so on, all the way up to
 
-```
+```css
 ...
 .tableau.row-18 { z-index: 18; }
 .tableau.row-18.up-12 { top: 635px; }
@@ -233,7 +233,7 @@ In order to let the player drag cards around the table, we set up the `.card` el
 the only *drop target*, the object that handles dropping them again.  The first part of making 
 an element a drag target is to set a listener on it for `dragstart` events:
 
-```
+```javascript
 function dragStart(event) {
     event.dataTransfer.setData("text/plain", event.target.id);
     return true;
@@ -247,13 +247,13 @@ will tell us which card is being dropped.  Then it returns `true` or `false`, ac
 whether it wants to allow the drag or not.  The second part of making an element draggable is 
 to set its HTML attribute `draggable` to `true`:
 
-```
+```html
 <div id="mydiv" draggable="true">...</div>
 ```
 
 To make a card undraggable, we undo both of these.  All of this is handled in the `setDraggable()` function:
 
-```
+```javascript
 function setCardDraggable(card, draggable) {
     if (draggable) {
         card.setAttribute("draggable", "true");
@@ -269,7 +269,7 @@ Setting up a drop target is a little more work.  First the `#table` element need
 for `dragenter` and `dragover` events.  It needs to call `event.preventDefault()` on these 
 events, or else it will never receive the eventual `drop` event that it really wants.
 
-```
+```javascript
 var table = document.getElementById("table");
 table.addEventListener("dragenter", function(event) { event.preventDefault(); }, false);
 table.addEventListener("dragover", function(event) { event.preventDefault(); }, false);
@@ -283,4 +283,4 @@ The table's `drop` event handler, the `handleDropEvent()` function, does these t
 * It determines whether the player can legally drop the card at that location.
 * If the drop is allowed, it moves the card to its new location.
 
-XXX
+
