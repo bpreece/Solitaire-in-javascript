@@ -46,17 +46,13 @@ this project.
 
 There are four general areas on the card table where cards are stacked:
 
-* When the game begins, the deck of cards are shuffled, and placed face down on the **stock**.  
-In this game, the stock is located in the upper left corner of the table.
+* When the game begins, the deck of cards are shuffled, and placed face down on the **stock**.  In this game, the stock is located in the upper left corner of the table.
 
-* Cards are dealt from the stock onto the **tableau**, which consists of seven columns of 
-cards.  The tableau is located at the bottom of the table.
+* Cards are dealt from the stock onto the **tableau**, which consists of seven columns of cards.  The tableau is located at the bottom of the table.
 
-* The player turns cards three at a time from the stock into the **waste**, which is located 
-to the right of the stock.
+* The player turns cards three at a time from the stock into the **waste**, which is located to the right of the stock.
 
-* The goal is to move all the cards into the **foundation**, which consists of four stacks, 
-one per suit.  The foundation is in the upper right of the table.
+* The goal is to move all the cards into the **foundation**, which consists of four stacks, one per suit.  The foundation is in the upper right of the table.
 
 ![terminology](terminology.png)
 
@@ -73,7 +69,7 @@ This code maintains several lists of cards:  one list of all the cards in the st
 list of all the cards in the waste; an array of four lists, one for each stack in the 
 foundation; and another array of seven lists, one for each column in the tableau:
 
-```
+```javascript
 var solitaire = {
     stock: [],
     waste: [],
@@ -140,6 +136,8 @@ transition time for all the positions at once:
 We also know that all the cards in the same column have the same left position, regardless of 
 the row, so we can handle the left position separately:
 
+* Hello
+
 ```
 .tableau.col-1 { left: 0; }
 .tableau.col-2 { left: 146px; }
@@ -178,7 +176,9 @@ for (var row = 1; row <= 7; row++) {
     }
 ```
 
-Of course, this moves all the cards at once.  It would be nice to animate them, so it looks like the cards are actually being dealt.  We use `setTimeout()` to spread out the card movements:
+Of course, this moves all the cards at once.  It would be nice to animate them, so it looks 
+like the cards are actually being dealt.  We use `setTimeout()` to spread out the card 
+movements:
 
 ```
 for (var row = 1, timeout = 0; row <= 7; row++) {
@@ -277,8 +277,10 @@ table.addEventListener("drop", function(event) { self.handleDropEvent(event); },
 ```
 
 The table's `drop` event handler, the `handleDropEvent()` function, does these things:
+
 * It fetches the drop target from the drop event.
-* It locates the card begin dropped, using the HTML `id` that was stored in the event's data 
-transfer information in the event during the `dragstart` event.
+* It locates the card begin dropped, using the HTML `id` that was stored in the event's data transfer information in the event during the `dragstart` event.
 * It determines whether the player can legally drop the card at that location.
 * If the drop is allowed, it moves the card to its new location.
+
+XXX
