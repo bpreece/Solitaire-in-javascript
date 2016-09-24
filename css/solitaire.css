@@ -1,0 +1,269 @@
+/* 
+    Created on : Sep 1, 2016, 11:13:44 AM
+    Author     : bpreece
+*/
+
+html {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-image: url("img/background.png");
+    background-size: auto, auto;
+    height: 100%;
+}
+
+#content {
+    position: relative;
+    height: 100%;
+    width: 1000px;
+    margin: auto;
+}
+
+#banner #controls {
+    float: left;
+}
+
+#banner #controls button {
+    font-size: 25px;
+    padding: 5px 25px;
+    margin: 0;
+    border: none;
+    border-radius: 15px;
+    color: white;
+    background: #008800;
+}
+
+#banner {
+    text-align: center;
+    font-family: sans-serif;
+    font-size: 250%;
+    font-weight: bold;
+    color: white;
+    line-height: 50px;
+}
+
+#banner #status {
+    float: right;
+}
+
+#banner h1 {
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+}
+
+#table {
+    position: absolute;
+    top: 75px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: hidden;
+    background-image: url("img/table-background.png");
+    background-repeat: no-repeat;
+}
+
+.card {
+    position: absolute;
+    width: 124px;
+    height: 175px;
+    background-image: url("img/card-back.png")
+}
+
+/*
+ * This magic allows the card element to get the dragstart event, instead of 
+ * the card's IMG element which is above it.
+ */
+.card img {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-slelect: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+.card.face-down img {
+    opacity: 0;
+    transition-duration: 0.25s;
+}
+
+.card.face-up img {
+    opacity: 1;
+    transition-duration: 0.25s;
+}
+
+.card.stock,
+.card.waste.col-1, .card.waste.col-2, .card.waste.col-3,
+.card.foundation.col-1, .card.foundation.col-2, .card.foundation.col-3, .card.foundation.col-4, 
+.card.tableau.col-1, .card.tableau.col-2, .card.tableau.col-3, .tableau.col-4, 
+.card.tableau.col-5, .card.tableau.col-6, .card.tableau.col-7,
+.card.tableau.row-1, .card.tableau.row-2, .card.tableau.row-3, .tableau.row-4, 
+.card.tableau.row-5, .card.tableau.row-6, .card.tableau.row-7 { 
+    transition-duration: 0.25s;
+}
+
+
+/*
+ * This is so ugly it's almost beautiful.  Ok, it's not really. but this is how 
+ * the game uses CSS transitions to create the move effects.
+ */
+.stock { left: 0; top: 0; }
+.stock.target { position: absolute; width: 124px; height: 175px; }
+
+.waste { top: 0; }
+.waste.col-1 { left: 146px; }
+.waste.col-2 { left: 166px; }
+.waste.col-3 { left: 186px; }
+.waste.target { position: absolute; width: 164px; height: 175px; }
+
+.foundation { top: 0; }
+.foundation.col-1 { left: 438px; }
+.foundation.col-2 { left: 584px; }
+.foundation.col-3 { left: 730px; }
+.foundation.col-4 { left: 876px; }
+.foundation.target { position: absolute; width: 124px; height: 175px; }
+
+.tableau.col-1 { left: 0; }
+.tableau.col-2 { left: 146px; }
+.tableau.col-3 { left: 292px; }
+.tableau.col-4 { left: 438px; }
+.tableau.col-5 { left: 584px; }
+.tableau.col-6 { left: 730px; }
+.tableau.col-7 { left: 876px; }
+
+.tableau.row-1 { top: 220px; z-index: 1; }
+
+.tableau.row-2 { top: 225px; z-index: 2; }
+.tableau.row-2.up-2 { top: 255px; }
+
+.tableau.row-3 { top: 230px; z-index: 3; }
+.tableau.row-3.up-2 { top: 260px; }
+.tableau.row-3.up-3 { top: 290px; }
+
+.tableau.row-4 { top: 235px; z-index: 4; }
+.tableau.row-4.up-2 { top: 265px; }
+.tableau.row-4.up-3 { top: 295px; }
+.tableau.row-4.up-4 { top: 325px; }
+
+.tableau.row-5 { top: 240px; z-index: 5; }
+.tableau.row-5.up-2 { top: 270px; }
+.tableau.row-5.up-3 { top: 300px; }
+.tableau.row-5.up-4 { top: 330px; }
+.tableau.row-5.up-5 { top: 360px; }
+
+.tableau.row-6 { top: 245px; z-index: 6; }
+.tableau.row-6.up-2 { top: 275px; }
+.tableau.row-6.up-3 { top: 305px; }
+.tableau.row-6.up-4 { top: 335px; }
+.tableau.row-6.up-5 { top: 365px; }
+.tableau.row-6.up-6 { top: 395px; }
+
+.tableau.row-7 { top: 250px; z-index: 7; }
+.tableau.row-7.up-2 { top: 280px; }
+.tableau.row-7.up-3 { top: 310px; }
+.tableau.row-7.up-4 { top: 340px; }
+.tableau.row-7.up-5 { top: 370px; }
+.tableau.row-7.up-6 { top: 400px; }
+.tableau.row-7.up-7 { top: 430px; }
+
+.tableau.row-8 { z-index: 8; }
+.tableau.row-8.up-2 { top: 285px; }
+.tableau.row-8.up-3 { top: 315px; }
+.tableau.row-8.up-4 { top: 345px; }
+.tableau.row-8.up-5 { top: 375px; }
+.tableau.row-8.up-6 { top: 405px; }
+.tableau.row-8.up-7 { top: 435px; }
+.tableau.row-8.up-8 { top: 465px; }
+
+.tableau.row-9 { z-index: 9; }
+.tableau.row-9.up-3 { top: 320px; }
+.tableau.row-9.up-4 { top: 350px; }
+.tableau.row-9.up-5 { top: 380px; }
+.tableau.row-9.up-6 { top: 410px; }
+.tableau.row-9.up-7 { top: 440px; }
+.tableau.row-9.up-8 { top: 470px; }
+.tableau.row-9.up-9 { top: 500px; }
+
+.tableau.row-10 { z-index: 10; }
+.tableau.row-10.up-4 { top: 355px; }
+.tableau.row-10.up-5 { top: 385px; }
+.tableau.row-10.up-6 { top: 415px; }
+.tableau.row-10.up-7 { top: 445px; }
+.tableau.row-10.up-8 { top: 475px; }
+.tableau.row-10.up-9 { top: 505px; }
+.tableau.row-10.up-10 { top: 535px; }
+
+.tableau.row-11 { z-index: 11; }
+.tableau.row-11.up-5 { top: 390px; }
+.tableau.row-11.up-6 { top: 420px; }
+.tableau.row-11.up-7 { top: 450px; }
+.tableau.row-11.up-8 { top: 480px; }
+.tableau.row-11.up-9 { top: 510px; }
+.tableau.row-11.up-10 { top: 540px; }
+.tableau.row-11.up-11 { top: 570px; }
+
+.tableau.row-12 { z-index: 12; }
+.tableau.row-12.up-6 { top: 425px; }
+.tableau.row-12.up-7 { top: 455px; }
+.tableau.row-12.up-8 { top: 485px; }
+.tableau.row-12.up-9 { top: 515px; }
+.tableau.row-12.up-10 { top: 545px; }
+.tableau.row-12.up-11 { top: 575px; }
+.tableau.row-12.up-12 { top: 605px; }
+
+.tableau.row-13 { z-index: 13; }
+.tableau.row-13.up-7 { top: 460px; }
+.tableau.row-13.up-8 { top: 490px; }
+.tableau.row-13.up-9 { top: 520px; }
+.tableau.row-13.up-10 { top: 550px; }
+.tableau.row-13.up-11 { top: 580px; }
+.tableau.row-13.up-12 { top: 610px; }
+.tableau.row-13.up-13 { top: 640px; }
+
+.tableau.row-14 { z-index: 14; }
+.tableau.row-14.up-8 { top: 495px; }
+.tableau.row-14.up-9 { top: 525px; }
+.tableau.row-14.up-10 { top: 555px; }
+.tableau.row-14.up-11 { top: 585px; }
+.tableau.row-14.up-12 { top: 615px; }
+.tableau.row-14.up-13 { top: 645px; }
+
+.tableau.row-15 { z-index: 15; }
+.tableau.row-15.up-9 { top: 530px; }
+.tableau.row-15.up-10 { top: 560px; }
+.tableau.row-15.up-11 { top: 590px; }
+.tableau.row-15.up-12 { top: 620px; }
+.tableau.row-15.up-13 { top: 650px; }
+
+.tableau.row-16 { z-index: 16; }
+.tableau.row-16.up-10 { top: 565px; }
+.tableau.row-16.up-11 { top: 595px; }
+.tableau.row-16.up-12 { top: 625px; }
+.tableau.row-16.up-13 { top: 655px; }
+
+.tableau.row-17 { z-index: 17; }
+.tableau.row-17.up-11 { top: 600px; }
+.tableau.row-17.up-12 { top: 630px; }
+.tableau.row-17.up-13 { top: 660px; }
+
+.tableau.row-18 { z-index: 18; }
+.tableau.row-18.up-12 { top: 635px; }
+.tableau.row-18.up-13 { top: 665px; }
+
+.tableau.row-19 { z-index: 19; }
+.tableau.row-19.up-13 { top: 670px; }
+
+.tableau.target { position: absolute; top: 230px; width: 124px; bottom: 0; }
+
+/* 
+ * Change the cursor over draggable elements, so the player knows it's 
+ * draggable.
+ */
+[draggable] {
+    cursor: move;
+}
