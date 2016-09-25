@@ -13,6 +13,10 @@ it.  There are no other 3rd-party libraries.  No, not even JQuery.
 This code was written primarily as an exercise in the basic use of CSS transitions and HTML 
 drag-and-drop.  I'm pretty happy with it.
 
+The card images are in the public domain, and were downloaded from 
+
+`https://commons.wikimedia.org/wiki/File:Atlasnye_playing_cards_deck.svg`
+
 ### Things Left As An Exercise For The Reader
 
 This game is entirely playable as it, but it's missing a few pretty standard features:

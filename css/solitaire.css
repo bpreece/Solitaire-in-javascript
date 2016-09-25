@@ -68,9 +68,10 @@ body {
 
 .card {
     position: absolute;
-    width: 124px;
-    height: 175px;
-    background-image: url("img/card-back.png")
+    width: 120px;
+    height: 180px;
+    background-image: url("img/card-back.png");
+    background-repeat: no-repeat;
 }
 
 /*
@@ -113,20 +114,20 @@ body {
  * the game uses CSS transitions to create the move effects.
  */
 .stock { left: 0; top: 0; }
-.stock.target { position: absolute; width: 124px; height: 175px; }
+.stock.target { position: absolute; width: 120px; height: 180px; }
 
 .waste { top: 0; }
 .waste.col-1 { left: 146px; }
 .waste.col-2 { left: 166px; }
 .waste.col-3 { left: 186px; }
-.waste.target { position: absolute; width: 164px; height: 175px; }
+.waste.target { position: absolute; width: 164px; height: 180px; }
 
 .foundation { top: 0; }
 .foundation.col-1 { left: 438px; }
 .foundation.col-2 { left: 584px; }
 .foundation.col-3 { left: 730px; }
 .foundation.col-4 { left: 876px; }
-.foundation.target { position: absolute; width: 124px; height: 175px; }
+.foundation.target { position: absolute; width: 120px; height: 180px; }
 
 .tableau.col-1 { left: 0; }
 .tableau.col-2 { left: 146px; }
@@ -258,7 +259,7 @@ body {
 .tableau.row-19 { z-index: 19; }
 .tableau.row-19.up-13 { top: 670px; }
 
-.tableau.target { position: absolute; top: 230px; width: 124px; bottom: 0; }
+.tableau.target { position: absolute; top: 230px; width: 120px; bottom: 0; }
 
 /* 
  * Change the cursor over draggable elements, so the player knows it's 
