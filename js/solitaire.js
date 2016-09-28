@@ -26,6 +26,7 @@ var SOLITAIRE = (function () {
         cardElement.className = "card face-down";
         var imgElement = document.createElement("img");
         imgElement.setAttribute("src", "/img/" + PIPS[pip] + " " + SUITS[suit] + ".png");
+        imgElement.setAttribute("draggable", "false");
         cardElement.appendChild(imgElement);
 
         return cardElement;
@@ -86,7 +87,7 @@ var SOLITAIRE = (function () {
      * @returns {Boolean}
      */
     function dragStart(event) {
-        event.dataTransfer.setData("text/plain", event.target.id);
+        event.dataTransfer.setData("text", event.target.id);
         return true;
     }
     
@@ -613,14 +614,14 @@ var SOLITAIRE = (function () {
      * @returns {undefined}
      */
     solitaire.handleDropEvent = function(event) {
-        var cardID = event.dataTransfer.getData("text/plain");
+        event.preventDefault(); 
+        var cardID = event.dataTransfer.getData("text");
         var card = document.getElementById(cardID);
         var target = event.target;
         if (target.tagName === 'IMG') {
             target = target.parentNode;
         }
         this.dropCardOntoTarget(card, target); 
-        event.preventDefault(); 
     };
     
     /*

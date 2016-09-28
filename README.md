@@ -13,7 +13,8 @@ it.  There are no other 3rd-party libraries.  No, not even JQuery.
 This code was written primarily as an exercise in the basic use of CSS transitions and HTML 
 drag-and-drop.  I'm pretty happy with it.
 
-The card images are in the public domain, and were downloaded from 
+The card images were generously donated to the public, and were downloaded from Wikimedia Commons
+at
 
 `https://commons.wikimedia.org/wiki/File:Atlasnye_playing_cards_deck.svg`
 
@@ -90,7 +91,7 @@ on the table are 1-indexed, while the internal data structures are all zero-inde
 ### Dealing the cards
 *Or, Abusing CSS Transitions For Fun And Pr- ... well for fun, anyway.*
 
-Okay, let's get this out of the way immediately:  this is not pretty.  Actually, it's ugly.  
+Okay, let's get this out of the way immediately:  this is not pretty.  Actually, it's ugly. 
 It's bug-sucking ugly.  It's so ugly, that it's fascinating in a horror-story sort of way.  So 
 ugly only an author could love it, and I'm very proud.  
 
