@@ -164,8 +164,6 @@ transition time for all the positions at once:
 We also know that all the cards in the same column have the same left position, regardless of 
 the row, so we can handle the left position separately:
 
-* Hello
-
 ```css
 .tableau.col-1 { left: 0; }
 .tableau.col-2 { left: 146px; }
