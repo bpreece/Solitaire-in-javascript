@@ -19,6 +19,7 @@ at
 `https://commons.wikimedia.org/wiki/File:Atlasnye_playing_cards_deck.svg`
 
 ### Things Left As An Exercise For The Reader
+*Or, yeah, I'll get to it tomorrow.*
 
 This game is entirely playable as it, but it's missing a few pretty standard features:
 
