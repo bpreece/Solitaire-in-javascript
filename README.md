@@ -211,15 +211,16 @@ for (var row = 1, timeout = 0; row <= 7; row++) {
     for (var col = row; col <= 7; col++, timeout += 50) {
         (function(row, col, timeout) {
             setTimeout(function() {
-            var card = stock.pop();
-            self.tableau[col-1].push(card);
-            var className = "tableau card row-" + row + " col-" + col;
-            if (col === row) {
-                className += " face-up";
-            }
-            card.className = className;
-        }, timeout);
-    })(row, col, timeout);
+                var card = stock.pop();
+                self.tableau[col-1].push(card);
+                var className = "tableau card row-" + row + " col-" + col;
+                if (col === row) {
+                    className += " face-up";
+                }
+                card.className = className;
+            }, timeout);
+        })(row, col, timeout);
+    }
 }
 ```
 
@@ -250,6 +251,8 @@ and so on, all the way up to
 .tableau.row-19 { z-index: 19; }
 .tableau.row-19.up-13 { top: 670px; }
 ```
+
+In the end we'll have 104 definitions for all the possible positions in the tableau.
 
 ### Playing cards
 *Or, Drag It In And Drop It Anywhere*
