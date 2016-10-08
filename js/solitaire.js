@@ -22,6 +22,8 @@
  */
 
 var SOLITAIRE = (function () {
+    var WIN_PER_CARD = 5;
+    var COST_PER_GAME = 52;
     
     /*
      * Create a new card element.
@@ -81,14 +83,15 @@ var SOLITAIRE = (function () {
      * @param {type} score
      * @returns {undefined}
      */
-    solitaire.setScore = function(score) {
+    solitaire.adjustScore = function(score) {
+        this.score += score;
         var statusDiv = document.getElementById("status");
-        if (score < 0) {
+        if (this.score < 0) {
             statusDiv.style.color = "red";
-            statusDiv.textContent = "($" + (-score) + ")";
+            statusDiv.textContent = "($" + (-this.score) + ")";
         } else {
             statusDiv.style.color = "lightblue";
-            statusDiv.textContent = "$" + score;
+            statusDiv.textContent = "$" + this.score;
         }
     };
     
@@ -172,8 +175,7 @@ var SOLITAIRE = (function () {
      */
     solitaire.dealCards = function(stock) {
         var self = this;
-        this.score -= 52;
-        this.setScore(this.score);
+        this.adjustScore(-COST_PER_GAME);
         
         for (var row = 1, timeout = 0; row <= 7; row++, timeout += 75) {
             for (var col = row; col <= 7; col++, timeout += 50) {
@@ -412,8 +414,7 @@ var SOLITAIRE = (function () {
                 setCardDraggable(pile[pile.length - 1], true);
             }
             card.removeAttribute("col");
-            this.score -= 5;
-            this.setScore(this.score);
+            this.adjustScore(-WIN_PER_CARD);
         } else if (card.classList.contains("tableau")) {
             // Assume this is the top card (up == 1).  If it's not, then we 
             // should be calling removeCardArrayFromTableau() instead.
@@ -493,8 +494,7 @@ var SOLITAIRE = (function () {
         card.setAttribute("col", col);
         card.style.zIndex = pile.length + 1;
         card.className = cardClassName;
-        this.score += 5;
-        this.setScore(this.score);
+        this.adjustScore(WIN_PER_CARD);
     } ;
     
     /*
