@@ -131,192 +131,6 @@ var SOLITAIRE = (function () {
     }
     
     /*
-     * Create a new game.
-     * 
-     * This function allocates elements for a new deck of cards, shuffles 
-     * them, and adds the card elements to the stock pile.  This function does 
-     * not deal the cards.
-     * 
-     * @returns {undefined}
-     */
-    solitaire.newGame = function() {
-        // create new elements for the cards
-        for (var suit = 0; suit < 4; suit++) {
-            for (var pip = 1; pip <= 13; pip++) {
-                var cardElement = newCardElement(suit, pip);
-                cardElement.id = PIPS[pip] + ' ' + SUITS[suit];
-                this.stock.push(cardElement);
-            }
-        }
-        // shuffle the cards in the deck
-        for (var i = 0; i < this.stock.length; i++) {
-            var j = i + Math.floor(Math.random() * this.stock.length - i);
-            var tmp = this.stock[j];
-            this.stock[j] = this.stock[i];
-            this.stock[i] = tmp;
-        }
-        // add the new card elements to the stock
-        var tableElement = document.getElementById("table");
-        for (var j = 0; j < this.stock.length; j++) {
-            var card = this.stock[j];
-            card.classList.add("stock");
-            card.style.zIndex = j;
-            tableElement.appendChild(card);
-        }
-    };
-    
-    /*
-     * Deal cards from the stock onto the tableau
-     * 
-     * Dealing a new game costs the player $52.
-     * 
-     * @param {type} stock
-     * @returns {undefined}
-     */
-    solitaire.dealCards = function(stock) {
-        var self = this;
-        this.adjustScore(-COST_PER_GAME);
-        
-        for (var row = 1, timeout = 0; row <= 7; row++, timeout += 75) {
-            for (var col = row; col <= 7; col++, timeout += 50) {
-                (function(row, col, timeout) {
-                    setTimeout(function() {
-                        // move one card from the stock list to the tableau to the tableau list
-                        var card = stock.pop();
-                        card.style.zIndex = "";
-                        self.tableau[col-1].push(card);
-                        // set the card attributes for its position in the tableau - this will animate the move
-                        card.setAttribute("row", row);
-                        card.setAttribute("col", col);
-                        var className = "tableau card row-" + row + " col-" + col;
-                        if (row < col) {
-                            className += " face-down" ;
-                        } else /* row === col */ {
-                            className += " face-up up-1" ;
-                            card.setAttribute("up", "1");
-                            setCardDraggable(card, true);
-                        }
-                        card.className = className;
-                    }, timeout);
-                })(row, col, timeout);
-            }
-        }
-    };
-    
-    /*
-     * Remove all the card elements from the table and let them be garbage collected.
-     * 
-     * @returns {solitaire_L8.solitaire.clearTable}
-     */
-    solitaire.clearTable = function() {
-        this.stock = [];
-        this.waste = [];
-        this.foundation = [ [], [], [], [] ];
-        this.tableau = [ [], [], [], [], [], [], [] ];
-        // The list returned by getElementsByClassName() is an active list -- 
-        // if you remove a card from the DOM, then it will automatically be 
-        // removed from the list as well.
-        var cards = document.getElementsByClassName("card");
-        while (cards.length > 0) {
-            var card = cards[0];
-            card.parentElement.removeChild(card);
-        }
-    };
-
-    /*
-     * Deal out a new game.
-     * 
-     * All the cards on the table will be garbage collected.  A new deck of 
-     * cards will be created and shuffled and dealt out.
-     * 
-     * @returns {undefined}
-     */
-    solitaire.redeal = function() {
-        this.clearTable();
-        this.newGame();
-        this.dealCards(this.stock);
-    };
-    
-    /*
-     * Turn all the cards from the waste pile back over and return them to the stock pile.
-     * 
-     * All the cards returned to the stock are made undraggable again.
-     * 
-     *  @returns {undefined}
-     */
-    solitaire.resetStock = function() {
-        var self = this;
-        if (this.waste.length > 0) {
-            setCardDraggable(this.waste[this.waste.length - 1], false);
-            var repeater = setInterval(
-                    function() {
-                        var card = self.waste.pop();
-                        self.stock.push(card);
-                        card.style.zIndex = self.stock.length;
-                        card.className = "stock card face-down";
-                        if (self.waste.length === 0) {
-                            clearInterval(repeater);
-                        }
-                    }, 25);
-        }
-    };
-    
-    /*
-     * Turn the top card(s) from the stock pile over into the waste pile.
-     * 
-     * Only the top card of the waste pile is draggable, so if the waste pile 
-     * is not empty, then the top waste card is made undraggable.
-     * 
-     * @param {type} stock
-     * @returns {undefined}
-     */
-    solitaire.turnStock = function(stock) {
-        var self = this;
-        if (self.stock.length > 0) {
-            if (self.waste.length > 0) {
-                setCardDraggable(self.waste[self.waste.length - 1], false);
-            }
-            
-            (function turnOneCard(col, stock) {
-                var card = stock.pop();
-                card.style.zIndex = self.waste.length;
-                self.waste.push(card);
-                card.className = "waste card col-" + col + " face-up";
-                if (col < 3 && stock.length > 0) {
-                    setTimeout(function() { turnOneCard(col+1, stock); }, 50);
-                } else {
-                    setCardDraggable(card, true);
-                }
-            })(1, this.stock);
-        }
-    };
-    
-    /*
-     * Handle a mouse click.
-     * 
-     * Only the stock pile accepts clicks.  If there are cards in the stock 
-     * pile, then the top card(s) are turned over into the waste pile.  But if 
-     * the stock pile is empty, then the waste pile is turned back over and 
-     * returned to the stock.
-     * 
-     * @param {type} event
-     * @returns {undefined}
-     */
-    solitaire.handleClick = function(event) {
-        var target = document.elementFromPoint(event.clientX, event.clientY);
-        if (target.classList.contains('target')) {
-            if (target.classList.contains('stock')) {
-                this.resetStock();
-            }
-        } else if (target.tagName === 'IMG') {
-            // Got a card
-            if (target.parentNode.classList.contains("stock")) {
-                this.turnStock();
-            }
-        }
-    };
-    
-    /*
      * Determine whether a card can be moved to a pile on the foundation.
      * 
      * If the card comes from the tableau, it must be the top card.  Only an 
@@ -350,6 +164,32 @@ var SOLITAIRE = (function () {
             return card.suit === topCard.suit && card.pip === topCard.pip + 1;
         }
     };
+
+    /*
+     * Drop a card onto the foundation.
+     * 
+     * This earns the player $5.
+     * 
+     *  If the pile is not empty, ,then the previous top card is set 
+     *  undraggable.  This is probably unnecessary, since it's completely 
+     *  covered, but it shouldn't hurt either.
+     *  
+     * @param {type} col
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.dropCardOntoFoundation = function(col, card) {
+        var pile = this.foundation[col-1];
+        if (pile.length > 0) {
+            setCardDraggable(pile[pile.length-1], false);  
+        }
+        pile.push(card);
+        var cardClassName = "card foundation col-" + col;
+        card.setAttribute("col", col);
+        card.style.zIndex = pile.length + 1;
+        card.className = cardClassName;
+        this.adjustScore(WIN_PER_CARD);
+    } ;
     
     /*
      * Determine whether a card can be moved onto a column in the tableau.
@@ -376,6 +216,138 @@ var SOLITAIRE = (function () {
                     (card.suit + topCard.suit !== 3) && 
                     card.pip === topCard.pip - 1;
         }
+    };
+    
+    /*
+     *  Drop a card onto the tableau.
+     *  
+     *  The HTML attributes "row" and "up" keep track of the card's position 
+     *  in the stack, and to determine where to draw the card on the table.. 
+     *  (See the CSS file.)  The "up" element says how many cards are face-up 
+     *  in the stack, not counting any cards above it  If the card is moving 
+     *  onto an empty stack, then the "row" and "up" will both be 1.  If it's 
+     *  moving onto cards already in the stack, then the new card's "row" and 
+     *  "up" will both increase by one.
+     *  
+     *  After it's been moved, the card will be set draggable.
+     *  
+     * @param {type} col
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.dropCardOntoTableau = function(col, card) {
+        var pile = this.tableau[col-1];
+        pile.push(card);
+        var row = pile.length;
+        card.style.zIndex = row;
+        card.setAttribute("col", col);
+        card.setAttribute("row", row);
+        var className = "tableau card row-" + row + " col-" + col + " face-up";
+        if (pile.length === 1) {
+            // this is the only card in the pile
+            card.setAttribute("up", "1");
+            className += "up-1";
+        } else {
+            // we need to set the previous top card face down ad undraggable
+            var previousTopCard = pile[pile.length - 2];
+            var up = parseInt(previousTopCard.getAttribute("up")) + 1;
+            card.setAttribute("up", up);
+            className += " up-" + up;
+        }
+        card.className = className;
+    };
+    
+    /*
+     * Called by dealCards() to move a card from the stock to the tableau. 
+     * 
+     * This is different from dropCardOntoTableau() since we know from the 
+     * caller that row <= col; that the card will be face up and if 
+     * row == col, but face down and undraggable otherwise; and that the card 
+     * beneath it is already set face down and undraggable.
+     * 
+     * @param {type} card
+     * @param {type} col
+     * @param {type} row
+     * @returns {undefined}
+     */
+    solitaire.dealCardOntoTableau = function(card, row, col) {
+        var pile  = this.tableau[col-1];
+        pile.push(card);
+        card.style.zIndex = pile.length;
+        card.setAttribute("row", row);
+        card.setAttribute("col", col);
+        var className = "tableau card row-" + row + " col-" + col;
+        if (row === col) {
+            card.setAttribute("up", "1");
+            className += " face-up up-1" ;
+            setCardDraggable(card, true);
+        } else /* row < col */ {
+            className += " face-down" ;
+        }
+        card.className = className;
+    };
+    
+    /*
+     * Drop a stack of cards onto the tableau
+     * 
+     * The cards are moved successively by calling dropCardOntotableau(), then 
+     * using setTimeout() to schedule each of the following moves.  The time 
+     * interval between moves is set to 250ms, divided by the number of cards 
+     * to move, so that the total time is less than 1/4 second.
+     * 
+     * @param {type} col
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.dropCardArrayOntoTableau = function(col, cardArray) {
+        var self = this;
+        var interval = 250 / cardArray.length;
+        var i = 0;
+        // You might think that setInterval() would be move natural than this.
+        // The problem with setInterval() is that the interval applies to the 
+        // first iteration as well as the rest, which means there's a 
+        // noticeable delay between the drop and the start of the move.
+        // Besides, this shows the interesting technique of using an ad hoc 
+        // named function to schedule repeated actions.
+        (function moveOne(col, cardArray) {
+            var card = cardArray.shift();
+            self.dropCardOntoTableau(col, card);
+            if (cardArray.length > 0) {
+                setTimeout(function() { moveOne(col, cardArray); }, interval);
+            }
+        })(col, cardArray);
+    };
+    
+    /*
+     * Remove a card from the tableau together with all the cards above it.
+     * 
+     * If the new top card is face-down, then we need to make it face up and
+     * make it draggable.
+     * 
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.removeCardArrayFromTableau = function(card) {
+        var col = card.getAttribute("col");
+        var row = card.getAttribute("row");
+        var pile = this.tableau[col-1];
+        var cards = [];
+        for (var i = row-1; i < pile.length; i++) {
+            cards.push(pile[i]);
+        }
+        for (var j = 0; j < cards.length; j++) {
+            pile.pop();
+        }
+        if (pile.length > 0) {
+            var topCard = pile[pile.length - 1];
+            if (topCard.classList.contains("face-down")) {
+                topCard.classList.remove("face-down");
+                topCard.classList.add("face-up", "up-1");
+                topCard.setAttribute("up", "1");
+                setCardDraggable(topCard, true);
+            }
+        }
+        return cards;
     };
     
     /*
@@ -440,133 +412,6 @@ var SOLITAIRE = (function () {
     };
     
     /*
-     * Remove a card from the tableau together with all the cards above it.
-     * 
-     * If the new top card is face-down, then we need to make it face up and
-     * make it draggable.
-     * 
-     * @param {type} card
-     * @returns {undefined}
-     */
-    solitaire.removeCardArrayFromTableau = function(card) {
-        var col = card.getAttribute("col");
-        var row = card.getAttribute("row");
-        var pile = this.tableau[col-1];
-        var cards = [];
-        for (var i = row-1; i < pile.length; i++) {
-            cards.push(pile[i]);
-        }
-        for (var j = 0; j < cards.length; j++) {
-            pile.pop();
-        }
-        if (pile.length > 0) {
-            var topCard = pile[pile.length - 1];
-            if (topCard.classList.contains("face-down")) {
-                topCard.classList.remove("face-down");
-                topCard.classList.add("face-up", "up-1");
-                topCard.setAttribute("up", "1");
-                setCardDraggable(topCard, true);
-            }
-        }
-        return cards;
-    };
-
-    /*
-     * Drop a card onto the foundation.
-     * 
-     * This earns the player $5.
-     * 
-     *  If the pile is not empty, ,then the previous top card is set 
-     *  undraggable.  This is probably unnecessary, since it's completely 
-     *  covered, but it shouldn't hurt either.
-     *  
-     * @param {type} col
-     * @param {type} card
-     * @returns {undefined}
-     */
-    solitaire.dropCardOntoFoundation = function(col, card) {
-        var pile = this.foundation[col-1];
-        if (pile.length > 0) {
-            setCardDraggable(pile[pile.length-1], false);  
-        }
-        pile.push(card);
-        var cardClassName = "card foundation col-" + col;
-        card.setAttribute("col", col);
-        card.style.zIndex = pile.length + 1;
-        card.className = cardClassName;
-        this.adjustScore(WIN_PER_CARD);
-    } ;
-    
-    /*
-     *  Drop a card onto the tableau.
-     *  
-     *  The HTML attributes "row" and "up" keep track of the card's position 
-     *  in the stack, and to determine where to draw the card on the table.. 
-     *  (See the CSS file.)  The "up" element says how many cards are face-up 
-     *  in the stack, not counting any cards above it  If the card is moving 
-     *  onto an empty stack, then the "row" and "up" will both be 1.  If it's 
-     *  moving onto cards already in the stack, then the new card's "row" and 
-     *  "up" will both increase by one.
-     *  
-     *  After it's been moved, the card will be set draggable.
-     *  
-     * @param {type} col
-     * @param {type} card
-     * @returns {undefined}
-     */
-    solitaire.dropCardOntoTableau = function(col, card) {
-        var pile = this.tableau[col-1];
-        if (pile.length === 0) {
-            pile.push(card);
-            card.setAttribute("col", col);
-            card.setAttribute("row", "1");
-            card.setAttribute("up", "1");
-            card.style.zIndex = 1;
-            card.className = "card tableau col-" + col + " row-1 face-up up-1";
-        } else {
-            var topCard = pile[pile.length - 1];
-            var up = parseInt(topCard.getAttribute("up")) + 1;
-            pile.push(card);
-            card.setAttribute("col", col);
-            card.setAttribute("row", pile.length);
-            card.setAttribute("up", up);
-            card.style.zIndex = pile.length;
-            card.className = "card tableau col-" + col + " row-" + pile.length + " face-up up-" + up;
-        }
-    };
-    
-    /*
-     * Drop a stack of cards onto the tableau
-     * 
-     * The cards are moved successively by calling dropCardOntotableau(), then 
-     * using setTimeout() to schedule each of the following moves.  The time 
-     * interval between moves is set to 250ms, divided by the number of cards 
-     * to move, so that the total time is less than 1/4 second.
-     * 
-     * @param {type} col
-     * @param {type} card
-     * @returns {undefined}
-     */
-    solitaire.dropCardArrayOntoTableau = function(col, cardArray) {
-        var self = this;
-        var interval = 250 / cardArray.length;
-        var i = 0;
-        // You might think that setInterval() would be move natural than this.
-        // The problem with setInterval() is that the interval applies to the 
-        // first iteration as well as the rest, which means there's a 
-        // noticeable delay between the drop and the start of the move.
-        // Besides, this shows the interesting technique of using an ad hoc 
-        // named function to schedule repeated actions.
-        (function moveOne(col, cardArray) {
-            var card = cardArray.shift();
-            self.dropCardOntoTableau(col, card);
-            if (cardArray.length > 0) {
-                setTimeout(function() { moveOne(col, cardArray); }, interval);
-            }
-        })(col, cardArray);
-    };
-    
-    /*
      *  Drop a drag target onto a drop target as a result of a "drop" event.
      *  
      *  This function determines whether the card is being dragged to the 
@@ -582,30 +427,30 @@ var SOLITAIRE = (function () {
      * @returns {undefined}
      */
     solitaire.dropCardOntoTarget = function(card, target) {
-        if (target.classList.contains("foundation")) {
-            var col = target.getAttribute("col");
-            if (this.foundationWillAcceptCard(col, card)) {
+        var col = target.getAttribute("col");
+        if (target.classList.contains("tableau") &&
+            this.tableauWillAcceptCard(col, card) &&
+            card.classList.contains("tableau")) 
+        {
+            // Moving from the tableau to the tableau, so move the drag target 
+            // and all the cards above it from one column inside the tableau 
+            // to another.
+            var cards = this.removeCardArrayFromTableau(card);
+            this.dropCardArrayOntoTableau(col, cards);
+        } else {
+            if (target.classList.contains("foundation") &&
+                this.foundationWillAcceptCard(col, card)) 
+            {
                 // move the card onto the foundation
                 this.removeCardFromPile(card);
                 this.dropCardOntoFoundation(col, card);
+            } else if (target.classList.contains("tableau") &&
+                this.tableauWillAcceptCard(col, card)) 
+            {
+                // move the card onto the tableau
+                this.removeCardFromPile(card);
+                this.dropCardOntoTableau(col, card);
             }
-        } else if (target.classList.contains("tableau")) {
-            var col = target.getAttribute("col");
-            if (this.tableauWillAcceptCard(col, card)) {
-                if (card.classList.contains("tableau")) {
-                    // move the drag target and all the cards above it from one
-                    // column inside the tableau to another
-                    var cards = this.removeCardArrayFromTableau(card);
-                    this.dropCardArrayOntoTableau(col, cards);
-                } else {
-                    // move the card onto the tableau
-                    this.removeCardFromPile(card);
-                    this.dropCardOntoTableau(col, card);
-                }
-            }
-        } else {
-            // there's no other place we can drag a card, so we can just 
-            // ignore all other cases.
         }
     };
     
@@ -631,13 +476,191 @@ var SOLITAIRE = (function () {
      */
     solitaire.handleDropEvent = function(event) {
         event.preventDefault(); 
+        // We discover the drag target by reading the transfer data
         var cardID = event.dataTransfer.getData("text");
         var card = document.getElementById(cardID);
-        var target = event.target;
-        if (target.tagName === 'IMG') {
-            target = target.parentNode;
+        // The drop target is in the drop event, but if the player is dropping 
+        // onto a card, we need to make sure we get the card, and not the 
+        // card's IMG element.
+        var dropTarget = event.target;
+        if (dropTarget.tagName === 'IMG') {
+            dropTarget = dropTarget.parentNode;
         }
-        this.dropCardOntoTarget(card, target); 
+        // Now we can drop the drag target onto the drop target.
+        this.dropCardOntoTarget(card, dropTarget); 
+    };
+    
+    /*
+     * Remove all the card elements from the table and let them be garbage collected.
+     * 
+     * @returns {solitaire_L8.solitaire.clearTable}
+     */
+    solitaire.clearTable = function() {
+        this.stock = [];
+        this.waste = [];
+        this.foundation = [ [], [], [], [] ];
+        this.tableau = [ [], [], [], [], [], [], [] ];
+        // The list returned by getElementsByClassName() is an active list -- 
+        // if you remove a card from the DOM, then it will automatically be 
+        // removed from the list as well.
+        var cards = document.getElementsByClassName("card");
+        while (cards.length > 0) {
+            var card = cards[0];
+            card.parentElement.removeChild(card);
+        }
+    };
+    
+    /*
+     * Create a new game.
+     * 
+     * This function allocates elements for a new deck of cards, shuffles 
+     * them, and adds the card elements to the stock pile.  This function does 
+     * not deal the cards.
+     * 
+     * @returns {undefined}
+     */
+    solitaire.newGame = function() {
+        // create new elements for the cards
+        for (var suit = 0; suit < 4; suit++) {
+            for (var pip = 1; pip <= 13; pip++) {
+                var cardElement = newCardElement(suit, pip);
+                cardElement.id = PIPS[pip] + ' ' + SUITS[suit];
+                this.stock.push(cardElement);
+            }
+        }
+        // shuffle the cards in the deck
+        for (var i = 0; i < this.stock.length; i++) {
+            var j = i + Math.floor(Math.random() * this.stock.length - i);
+            var tmp = this.stock[j];
+            this.stock[j] = this.stock[i];
+            this.stock[i] = tmp;
+        }
+        // add the new card elements to the stock
+        var tableElement = document.getElementById("table");
+        for (var j = 0; j < this.stock.length; j++) {
+            var card = this.stock[j];
+            card.classList.add("stock");
+            card.style.zIndex = j;
+            tableElement.appendChild(card);
+        }
+    };
+    
+    /*
+     * Deal cards from the stock onto the tableau
+     * 
+     * Dealing a new game costs the player $52.
+     * 
+     * @param {type} stock
+     * @returns {undefined}
+     */
+    solitaire.dealCards = function(stock) {
+        var self = this;
+        this.adjustScore(-COST_PER_GAME);
+        
+        for (var row = 1, timeout = 0; row <= 7; row++, timeout += 75) {
+            for (var col = row; col <= 7; col++, timeout += 50) {
+                (function(row, col, timeout) {
+                    setTimeout(function() {
+                        // move one card from the stock list to the tableau to the tableau list
+                        var card = stock.pop();
+                        self.dealCardOntoTableau(card, row, col);
+                    }, timeout);
+                })(row, col, timeout);
+            }
+        }
+    };
+    
+    /*
+     * Turn all the cards from the waste pile back over and return them to the stock pile.
+     * 
+     * All the cards returned to the stock are made undraggable again.
+     * 
+     *  @returns {undefined}
+     */
+    solitaire.resetStock = function() {
+        var self = this;
+        if (this.waste.length > 0) {
+            setCardDraggable(this.waste[this.waste.length - 1], false);
+            var repeater = setInterval(
+                    function() {
+                        var card = self.waste.pop();
+                        self.stock.push(card);
+                        card.style.zIndex = self.stock.length;
+                        card.className = "stock card face-down";
+                        if (self.waste.length === 0) {
+                            clearInterval(repeater);
+                        }
+                    }, 25);
+        }
+    };
+    
+    /*
+     * Turn the top card(s) from the stock pile over into the waste pile.
+     * 
+     * Only the top card of the waste pile is draggable, so if the waste pile 
+     * is not empty, then the top waste card is made undraggable.
+     * 
+     * @param {type} stock
+     * @returns {undefined}
+     */
+    solitaire.turnStock = function(stock) {
+        var self = this;
+        if (self.stock.length > 0) {
+            if (self.waste.length > 0) {
+                setCardDraggable(self.waste[self.waste.length - 1], false);
+            }
+            
+            (function turnOneCard(col, stock) {
+                var card = stock.pop();
+                card.style.zIndex = self.waste.length;
+                self.waste.push(card);
+                card.className = "waste card col-" + col + " face-up";
+                if (col < 3 && stock.length > 0) {
+                    setTimeout(function() { turnOneCard(col+1, stock); }, 50);
+                } else {
+                    setCardDraggable(card, true);
+                }
+            })(1, this.stock);
+        }
+    };
+
+    /*
+     * Deal out a new game.
+     * 
+     * All the cards on the table will be garbage collected.  A new deck of 
+     * cards will be created and shuffled and dealt out.
+     * 
+     * @returns {undefined}
+     */
+    solitaire.redeal = function() {
+        this.clearTable();
+        this.newGame();
+        this.dealCards(this.stock);
+    };
+    
+    /*
+     * Handle a mouse click.
+     * 
+     * Only the stock pile accepts clicks.  If there are cards in the stock 
+     * pile, then the top card(s) are turned over into the waste pile.  But if 
+     * the stock pile is empty, then the waste pile is turned back over and 
+     * returned to the stock.
+     * 
+     * @param {type} event
+     * @returns {undefined}
+     */
+    solitaire.handleClick = function(event) {
+        var target = document.elementFromPoint(event.clientX, event.clientY);
+        if (target.classList.contains('target')) {
+            if (target.classList.contains('stock')) {
+                this.resetStock();
+            }
+        } else if (target.tagName === 'IMG') {
+            // Got a card
+            if (target.parentNode.classList.contains("stock")) {
+                this.turnStock();
+            }
+        }
     };
     
     /*
