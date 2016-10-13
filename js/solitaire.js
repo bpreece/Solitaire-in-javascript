@@ -81,6 +81,7 @@ var SOLITAIRE = (function () {
 
     var solitaire = {
         score: 0,
+        stockResetsAllowed: 2,
         stock: [],
         waste: [],
         foundation: [ [], [], [], [] ],
@@ -714,6 +715,10 @@ var SOLITAIRE = (function () {
      * @returns {solitaire_L8.solitaire.clearTable}
      */
     solitaire.clearTable = function() {
+        this.stockResetsAllowed = 2;
+        var stockTarget = document.getElementById('stock-click-target');
+        stockTarget.classList.remove('disabled');
+
         this.stock = [];
         this.waste = [];
         this.foundation = [ [], [], [], [] ];
@@ -882,8 +887,16 @@ var SOLITAIRE = (function () {
             case 1:
                 if (target.classList.contains('stock')) {
                     if (target.classList.contains('target')) {
-                        var undoResetStock = this.resetStock();
-                        this.undoList.push(undoResetStock);
+                        if (this.stockResetsAllowed > 0) {
+                            var undoResetStock = this.resetStock();
+                            this.undoList.push(undoResetStock);
+                            if (--this.stockResetsAllowed === 0) {
+                                setTimeout(function() {
+                                    var stockTarget = document.getElementById('stock-click-target');
+                                    stockTarget.classList.add('disabled');
+                                }, 250);
+                            }
+                        }
                     } else {
                         // Got a card
                         var undoTurnStock = this.turnStock();

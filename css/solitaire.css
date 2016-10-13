@@ -137,6 +137,7 @@ body {
  */
 .stock { left: 0; top: 0; }
 .stock.target { position: absolute; width: 120px; height: 180px; }
+.stock.target.disabled { background-image: url('img/stock-disabled.png'); }
 
 .waste { top: 0; }
 .waste.col-1 { left: 146px; }
