@@ -22,6 +22,7 @@
  */
 
 var SOLITAIRE = (function () {
+    var DOUBLE_CLICK_TIMEOUT = 200;
     var WIN_PER_CARD = 5;
     var COST_PER_GAME = 52;
     
@@ -655,6 +656,21 @@ var SOLITAIRE = (function () {
         }
     };
     
+    solitaire.playToFoundation = function(card) {
+        for (var col = 1; col <= 4; col++) {
+            var pile = this.foundation[col - 1];
+            if (card.pip === (pile.length + 1) && 
+                    (pile.length === 0 || pile[0].suit === card.suit))
+            {
+                // move the card onto the foundation
+                var undoRemoveCardFromPile = this.removeCardFromPile(card);
+                var undoDropCardOntoFoundation = this.dropCardOntoFoundation(col, card);
+                return function() { undoDropCardOntoFoundation(); undoRemoveCardFromPile(); };
+            }
+        }
+        return function() { };
+    };
+    
     /*
      * Handle mouse drop events.
      * 
@@ -689,10 +705,6 @@ var SOLITAIRE = (function () {
         }
         // Now we can drop the drag target onto the drop target.
         var undoDropCardOntoTarget = this.dropCardOntoTarget(card, dropTarget); 
-        if (typeof undoDropCardOntoTarget !== "function") {
-            alert("Not a function!");
-            console.log("Not a function");
-        }
         this.undoList.push(undoDropCardOntoTarget);
     };
     
@@ -862,17 +874,36 @@ var SOLITAIRE = (function () {
      */
     solitaire.handleClick = function(event) {
         var target = document.elementFromPoint(event.clientX, event.clientY);
-        if (target.classList.contains('target')) {
-            if (target.classList.contains('stock')) {
-                var undoResetStock = this.resetStock();
-                this.undoList.push(undoResetStock);
-            }
-        } else if (target.tagName === 'IMG') {
-            // Got a card
-            if (target.parentNode.classList.contains("stock")) {
-                var undoTurnStock = this.turnStock();
-                this.undoList.push(undoTurnStock);
-            }
+        if (target.tagName === 'IMG') {
+            target = target.parentNode;
+        }
+        
+        switch (event.detail) {
+            case 1:
+                if (target.classList.contains('stock')) {
+                    if (target.classList.contains('target')) {
+                        var undoResetStock = this.resetStock();
+                        this.undoList.push(undoResetStock);
+                    } else {
+                        // Got a card
+                        var undoTurnStock = this.turnStock();
+                        this.undoList.push(undoTurnStock);
+                    }
+                }
+                break;
+            case 2:
+                var col = parseInt(target.getAttribute("col"));
+                var zIndex = parseInt(target.style.zIndex);
+                if (target.classList.contains("waste") && zIndex === this.waste.length || 
+                        target.classList.contains("tableau") && zIndex === this.tableau[col - 1].length) 
+                {
+                    var undoPlayToFoundation = this.playToFoundation(target);
+                    this.undoList.push(undoPlayToFoundation);
+                }
+                break;
+            default:
+                console.log("super-double click");
+                break;
         }
     };
     
