@@ -914,9 +914,6 @@ var SOLITAIRE = (function () {
                     this.undoList.push(undoPlayToFoundation);
                 }
                 break;
-            default:
-                console.log("super-double click");
-                break;
         }
     };
     

@@ -45,16 +45,10 @@ at
 
 This game is entirely playable as it, but it's missing a few pretty standard features:
 
-* The game is not limited to three turns of the stock
-* There's no "undo" feature.
 * There's no "Hint" button.
-* Double-clicking does absolutely nothing; you actually have to drag a card to play it.
 * There's no auto-play feature;  this really gets annoying towards the end of a game.
 * There's no **YOU WIN** animation when the player, you know, wins.
 * No memory; you can't come back later and resume a game.
-
-Implementing *undo* is not trivial, but is a well-understood problem.  You can find any number 
-of explanations on the Internet.
 
 The "Hint" button requires logic for finding valid moves.  It should be straightforward to 
 adapt the existing logic for determining whether a player's move is valid.  After that, it's 
