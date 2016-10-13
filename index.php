@@ -31,7 +31,10 @@ SOFTWARE.
     <body onload="SOLITAIRE.initialize();">
         <div id="content">
             <div id="banner">
-                <div id="controls"><button id="redeal-button" onclick="SOLITAIRE.redeal()">Redeal</button></div>
+                <div id="controls">
+                    <button id="redeal-button" onclick="SOLITAIRE.redeal()">Redeal</button>
+                    <button id="undo-button" onclick="SOLITAIRE.undo()">Undo</button>
+                </div>
                 <div id="status">$0</div>
                 <h1>SOLITAIRE</h1>
             </div>

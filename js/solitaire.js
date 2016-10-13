@@ -26,6 +26,17 @@ var SOLITAIRE = (function () {
     var COST_PER_GAME = 52;
     
     /*
+     * 
+     * @param {type} execList
+     * @returns {undefined}
+     */
+    function executeAll(execList) {
+        while (execList.length > 0) {
+            execList.pop()();
+        }
+    }
+    
+    /*
      * Create a new card element.
      * 
      * Each card element has javascript attributes indicating the suit and 
@@ -73,6 +84,7 @@ var SOLITAIRE = (function () {
         waste: [],
         foundation: [ [], [], [], [] ],
         tableau: [ [], [], [], [], [], [], [] ],
+        undoList: [],
     };
     
     /*
@@ -92,6 +104,17 @@ var SOLITAIRE = (function () {
         } else {
             statusDiv.style.color = "lightblue";
             statusDiv.textContent = "$" + this.score;
+        }
+    };
+    
+    /*
+     * 
+     * @returns {undefined}
+     */
+    solitaire.undo = function() {
+        if (this.undoList.length > 0) {
+            var undoFunction = this.undoList.pop();
+            undoFunction();
         }
     };
     
@@ -129,6 +152,81 @@ var SOLITAIRE = (function () {
             card.removeAttribute("draggable");
         }
     }
+    
+    /*
+     *  This function is undoable.
+     * 
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.dropCardOntoStock = function(card) {
+        var self = this;
+        self.stock.push(card);
+        card.style.zIndex = self.stock.length;
+        card.className = "stock card face-down";
+        return function() { 
+           var card = self.stock.pop();
+           card.style.zIndex = 99;
+       };
+    };
+    
+    /*
+     *  This function is undoable.
+     * 
+     * @param {type} card
+     * @returns {Function}
+     */
+    solitaire.removeCardFromStock = function(card) {
+        // presuming c ard is on top on the stock
+        var self = this;
+        self.stock.pop();
+        card.style.zIndex = 99;
+        return function() { self.dropCardOntoStock(card); };
+    };
+    
+    /*
+     * This function is undoable.
+     * 
+     * @param {type} col
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.dropCardOntoWaste = function(col, card) {
+        var self = this;
+        
+        if (self.waste.length > 0) {
+            setCardDraggable(self.waste[self.waste.length - 1], false);
+        }
+        self.waste.push(card);
+        card.style.zIndex = self.waste.length;
+        card.setAttribute("col", col);
+        card.className = "waste card col-" + col + " face-up";
+        setCardDraggable(card, true);
+        
+        return function() { self.removeCardFromWaste(card); };
+    };
+    
+    /*
+     *  This function is undoable.
+     *  
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.removeCardFromWaste = function(card) {
+        var self = this;
+
+        // presuming card is on top of the waste pile
+        self.waste.pop();
+        var col = parseInt(card.getAttribute("col"));
+        setCardDraggable(card, false);
+        card.removeAttribute("col");
+        card.style.zIndex = 99;
+        if (self.waste.length > 0) {
+            setCardDraggable(self.waste[self.waste.length-1], true);
+        }
+        
+        return function() { self.dropCardOntoWaste(col, card); };
+    };
     
     /*
      * Determine whether a card can be moved to a pile on the foundation.
@@ -179,6 +277,8 @@ var SOLITAIRE = (function () {
      * @returns {undefined}
      */
     solitaire.dropCardOntoFoundation = function(col, card) {
+        var self = this;
+
         var pile = this.foundation[col-1];
         if (pile.length > 0) {
             setCardDraggable(pile[pile.length-1], false);  
@@ -188,8 +288,61 @@ var SOLITAIRE = (function () {
         card.setAttribute("col", col);
         card.style.zIndex = pile.length + 1;
         card.className = cardClassName;
+        setCardDraggable(card, true);
         this.adjustScore(WIN_PER_CARD);
-    } ;
+        
+        return function() { self.removeCardFromFoundation(card); };
+    };
+    
+    /*
+     * 
+     * @param {type} card
+     * @returns {undefined}
+     */
+    solitaire.removeCardFromFoundation = function(card) {
+        var self = this;
+
+        // presume it's on top of the foundation pile
+        var col = parseInt(card.getAttribute("col"));
+        var pile = this.foundation[col - 1];
+        pile.pop();
+        if (pile.length > 0) {
+            setCardDraggable(pile[pile.length - 1], true);
+        }
+        card.removeAttribute("col");
+        setCardDraggable(card, false);
+        this.adjustScore(-WIN_PER_CARD);
+        
+        return function() { self.dropCardOntoFoundation(col, card); };
+    };
+    
+    /*
+     * 
+     * @param {type} col
+     * @returns {Boolean}
+     */
+    solitaire.turnTableauTopCardFaceUp = function(col, faceUp) {
+        var self = this;
+        var pile = self.tableau[col - 1];
+        if (pile.length > 0) {
+            var card = pile[pile.length - 1];
+            if (faceUp === true && card.classList.contains("face-down")) {
+                card.setAttribute("up", 1);
+                card.classList.remove("face-down");
+                card.classList.add("face-up", "up-1");
+                setCardDraggable(card, true);
+                return function() { self.turnTableauTopCardFaceUp(col, false); };
+            } else if (faceUp === false && card.classList.contains("face-up")) {
+                setCardDraggable(card, false);
+                card.removeAttribute("up");
+                card.classList.remove("up-1");
+                card.classList.remove("face-up");
+                card.classList.add("face-down");
+                return function() { self.turnTableauTopCardFaceUp(col, true); };
+            }
+        }
+        return function() { };
+    };
     
     /*
      * Determine whether a card can be moved onto a column in the tableau.
@@ -236,6 +389,8 @@ var SOLITAIRE = (function () {
      * @returns {undefined}
      */
     solitaire.dropCardOntoTableau = function(col, card) {
+        var self = this;
+
         var pile = this.tableau[col-1];
         pile.push(card);
         var row = pile.length;
@@ -244,17 +399,25 @@ var SOLITAIRE = (function () {
         card.setAttribute("row", row);
         var className = "tableau card row-" + row + " col-" + col + " face-up";
         if (pile.length === 1) {
-            // this is the only card in the pile
+            // this is the only card in the pile, so it had up==1
             card.setAttribute("up", "1");
-            className += "up-1";
+            className += " up-1";
         } else {
-            // we need to set the previous top card face down ad undraggable
+            // set this card's "up" from the current top of the pile
             var previousTopCard = pile[pile.length - 2];
-            var up = parseInt(previousTopCard.getAttribute("up")) + 1;
-            card.setAttribute("up", up);
-            className += " up-" + up;
+            if (previousTopCard.hasAttribute("up")) {
+                var up = parseInt(previousTopCard.getAttribute("up")) + 1;
+                card.setAttribute("up", up);
+                className += " up-" + up;
+            } else {
+                card.setAttribute("up", "1");
+                className += " up-1";
+            }
         }
         card.className = className;
+        setCardDraggable(card, true);
+        
+        return function() { self.removeCardFromTableau(card); };
     };
     
     /*
@@ -271,6 +434,8 @@ var SOLITAIRE = (function () {
      * @returns {undefined}
      */
     solitaire.dealCardOntoTableau = function(card, row, col) {
+        var self = this;
+
         var pile  = this.tableau[col-1];
         pile.push(card);
         card.style.zIndex = pile.length;
@@ -285,6 +450,36 @@ var SOLITAIRE = (function () {
             className += " face-down" ;
         }
         card.className = className;
+    };
+    
+    /*
+     * 
+     * @param {type} card
+     * @returns {solitaire_L24.solitaire.removeCardFromTableau.undoFunction}
+     */
+    solitaire.removeCardFromTableau = function(card) {
+        var self = this;
+
+        // Assume this is the top card (up == 1).  If it's not, then we 
+        // should be calling removeCardArrayFromTableau() instead.
+        var col = card.getAttribute("col");
+        card.removeAttribute("col");
+        card.removeAttribute("row");
+        card.removeAttribute("up");
+        card.classList.remove("up-1");
+        var pile = this.tableau[col-1];
+        pile.pop();
+        card.style.zIndex = 99;
+        setCardDraggable(card, false);
+        
+        // Flip the new top card, if the pile is not empty now, and if the 
+        // new top card is face down.
+        var undoTurnTableauTopCardFaceUp = self.turnTableauTopCardFaceUp(col, true);
+        
+        return function() { 
+            undoTurnTableauTopCardFaceUp(); 
+            self.dropCardOntoTableau(col, card); 
+        };
     };
     
     /*
@@ -303,19 +498,23 @@ var SOLITAIRE = (function () {
         var self = this;
         var interval = 250 / cardArray.length;
         var i = 0;
+
         // You might think that setInterval() would be move natural than this.
         // The problem with setInterval() is that the interval applies to the 
         // first iteration as well as the rest, which means there's a 
         // noticeable delay between the drop and the start of the move.
         // Besides, this shows the interesting technique of using an ad hoc 
         // named function to schedule repeated actions.
-        (function moveOne(col, cardArray) {
-            var card = cardArray.shift();
-            self.dropCardOntoTableau(col, card);
-            if (cardArray.length > 0) {
-                setTimeout(function() { moveOne(col, cardArray); }, interval);
-            }
-        })(col, cardArray);
+        for (var i = 0, timeout = 0; i < cardArray.length; i++, timeout += interval) {
+            var card = cardArray[i];
+            (function(col, card) {
+                setTimeout (function() {
+                    self.dropCardOntoTableau(col, card);
+                }, timeout);
+            })(col, card, timeout);
+        }
+        
+        return function() { self.removeCardArrayFromTableau(cardArray); };
     };
     
     /*
@@ -327,27 +526,52 @@ var SOLITAIRE = (function () {
      * @param {type} card
      * @returns {undefined}
      */
-    solitaire.removeCardArrayFromTableau = function(card) {
-        var col = card.getAttribute("col");
-        var row = card.getAttribute("row");
-        var pile = this.tableau[col-1];
-        var cards = [];
-        for (var i = row-1; i < pile.length; i++) {
-            cards.push(pile[i]);
-        }
-        for (var j = 0; j < cards.length; j++) {
-            pile.pop();
-        }
-        if (pile.length > 0) {
-            var topCard = pile[pile.length - 1];
-            if (topCard.classList.contains("face-down")) {
-                topCard.classList.remove("face-down");
-                topCard.classList.add("face-up", "up-1");
-                topCard.setAttribute("up", "1");
-                setCardDraggable(topCard, true);
-            }
-        }
-        return cards;
+    solitaire.removeCardArrayFromTableau = function(cardArray) {
+        var self = this;
+        
+        var bottomCard = cardArray[0];
+        var oldCol = parseInt(bottomCard.getAttribute("col"));
+        var oldRow = bottomCard.getAttribute("row");
+        var oldPile = self.tableau[oldCol - 1];
+        
+        self.tableau[oldCol - 1] = oldPile.slice(0, oldRow - 1);
+        
+        return function() { 
+            self.dropCardArrayOntoTableau(oldCol, cardArray); 
+        };
+    };
+    
+    /*
+     *  Moving from the tableau to the tableau, so move the drag target 
+     *  and all the cards above it from one column inside the tableau 
+     *  to another.
+     * 
+     * @param {type} newCol
+     * @param {type} card
+     * @returns {Function}
+     */
+    solitaire.moveCardArrayOnTableau = function(newCol, card) {
+        var self = this;
+        
+        // Collect the cards that need to be moved
+        var oldCol = parseInt(card.getAttribute("col"));
+        var oldRow = card.getAttribute("row");
+        var oldPile = self.tableau[oldCol - 1];
+        var cardArray = oldPile.slice(oldRow - 1);
+        self.tableau[oldCol - 1] = oldPile.slice(0, oldRow - 1);
+        
+        // Moving from the tableau to the tableau, so move the drag target 
+        // and all the cards above it from one column inside the tableau 
+        // to another.
+        var undoRemoveCardArrayFromTableau = self.removeCardArrayFromTableau(cardArray);
+        var undoDropCardArrayOntoTableau = self.dropCardArrayOntoTableau(newCol, cardArray);
+        var undoTurnTableauTopCardFaceUp = self.turnTableauTopCardFaceUp(oldCol, true);
+        
+        return function() { 
+            undoTurnTableauTopCardFaceUp(); 
+            undoDropCardArrayOntoTableau(); 
+            undoRemoveCardArrayFromTableau();
+        };
     };
     
     /*
@@ -369,45 +593,21 @@ var SOLITAIRE = (function () {
      * @returns {undefined}
      */
     solitaire.removeCardFromPile = function(card) {
+        var self = this;
+
         if (card.classList.contains("stock")) {
-            // presuming its top on the stock
-            this.stock.pop();
+            // presuming c ard is on top on the stock
+            var undoRemoveCardFromStock = self.removeCardFromStock(card);
+            return undoRemoveCardFromStock;
         } else if (card.classList.contains("waste")) {
-            this.waste.pop();
-            if (this.waste.length > 0) {
-                setCardDraggable(this.waste[this.waste.length-1], true);
-            }
+            var undoRemoveCardFromWaste = self.removeCardFromWaste(card);
+            return undoRemoveCardFromWaste;
         } else if (card.classList.contains("foundation")) {
-            // presume it's on top of the pile
-            var col = parseInt(card.getAttribute("col"));
-            var pile = this.foundation[col - 1];
-            pile.pop();
-            if (pile.length > 0) {
-                setCardDraggable(pile[pile.length - 1], true);
-            }
-            card.removeAttribute("col");
-            this.adjustScore(-WIN_PER_CARD);
+            var undoRemoveCardFromFoundation = self.removeCardFromFoundation(card);
+            return undoRemoveCardFromFoundation;
         } else if (card.classList.contains("tableau")) {
-            // Assume this is the top card (up == 1).  If it's not, then we 
-            // should be calling removeCardArrayFromTableau() instead.
-            var col = card.getAttribute("col");
-            card.removeAttribute("col");
-            card.removeAttribute("row");
-            card.removeAttribute("up");
-            card.classList.remove("up-1");
-            var pile = this.tableau[col-1];
-            pile.pop();
-            // Flip the new top card, if the pile is not empty now, and if the 
-            // new top card is face down.
-            if (pile.length > 0) {
-                var newTopCard = pile[pile.length-1];
-                if (newTopCard.classList.contains("face-down")) {
-                    newTopCard.classList.remove("face-down");
-                    newTopCard.classList.add("face-up", "up-1");
-                    newTopCard.setAttribute("up", "1");
-                    setCardDraggable(newTopCard, true);
-                }
-            }
+            var undoRemoveCardFromTableau = self.removeCardFromTableau(card);
+            return undoRemoveCardFromTableau;
         }
     };
     
@@ -432,24 +632,25 @@ var SOLITAIRE = (function () {
             this.tableauWillAcceptCard(col, card) &&
             card.classList.contains("tableau")) 
         {
-            // Moving from the tableau to the tableau, so move the drag target 
-            // and all the cards above it from one column inside the tableau 
-            // to another.
-            var cards = this.removeCardArrayFromTableau(card);
-            this.dropCardArrayOntoTableau(col, cards);
+            var undoMoveCardArrayOnTableau = this.moveCardArrayOnTableau(col, card);
+            return undoMoveCardArrayOnTableau;
         } else {
             if (target.classList.contains("foundation") &&
                 this.foundationWillAcceptCard(col, card)) 
             {
                 // move the card onto the foundation
-                this.removeCardFromPile(card);
-                this.dropCardOntoFoundation(col, card);
+                var undoRemoveCardFromPile = this.removeCardFromPile(card);
+                var undoDropCardOntoFoundation = this.dropCardOntoFoundation(col, card);
+                return function() { undoDropCardOntoFoundation(); undoRemoveCardFromPile(); };
             } else if (target.classList.contains("tableau") &&
                 this.tableauWillAcceptCard(col, card)) 
             {
                 // move the card onto the tableau
-                this.removeCardFromPile(card);
-                this.dropCardOntoTableau(col, card);
+                var undoRemoveCardFromPile = this.removeCardFromPile(card);
+                var undoDropCardOntoTableau = this.dropCardOntoTableau(col, card);
+                return function() { undoDropCardOntoTableau(); undoRemoveCardFromPile(); };
+            } else {
+                return function() { };
             }
         }
     };
@@ -487,7 +688,12 @@ var SOLITAIRE = (function () {
             dropTarget = dropTarget.parentNode;
         }
         // Now we can drop the drag target onto the drop target.
-        this.dropCardOntoTarget(card, dropTarget); 
+        var undoDropCardOntoTarget = this.dropCardOntoTarget(card, dropTarget); 
+        if (typeof undoDropCardOntoTarget !== "function") {
+            alert("Not a function!");
+            console.log("Not a function");
+        }
+        this.undoList.push(undoDropCardOntoTarget);
     };
     
     /*
@@ -500,6 +706,7 @@ var SOLITAIRE = (function () {
         this.waste = [];
         this.foundation = [ [], [], [], [] ];
         this.tableau = [ [], [], [], [], [], [], [] ];
+        this.undoList = [];
         // The list returned by getElementsByClassName() is an active list -- 
         // if you remove a card from the DOM, then it will automatically be 
         // removed from the list as well.
@@ -579,19 +786,24 @@ var SOLITAIRE = (function () {
      */
     solitaire.resetStock = function() {
         var self = this;
-        if (this.waste.length > 0) {
-            setCardDraggable(this.waste[this.waste.length - 1], false);
-            var repeater = setInterval(
-                    function() {
-                        var card = self.waste.pop();
-                        self.stock.push(card);
-                        card.style.zIndex = self.stock.length;
-                        card.className = "stock card face-down";
-                        if (self.waste.length === 0) {
-                            clearInterval(repeater);
-                        }
-                    }, 25);
+        
+        var undoList = [];
+        function undoFunction() { executeAll(undoList); }
+        
+        var count = self.waste.length;
+        for (var i = 0, timeout = 0; i < count; i++, timeout += 20) {
+            var card = self.waste[self.waste.length - 1];
+            var col = parseInt(card.getAttribute("col"));
+            self.removeCardFromPile(card);
+            (function(col, card) { 
+                setTimeout(function() {
+                    self.dropCardOntoStock(card);
+                    undoList.push(function() { self.removeCardFromPile(card); self.dropCardOntoWaste(col, card); });
+                }, timeout);
+            })(col, card);
         }
+        
+        return undoFunction;
     };
     
     /*
@@ -605,23 +817,22 @@ var SOLITAIRE = (function () {
      */
     solitaire.turnStock = function(stock) {
         var self = this;
-        if (self.stock.length > 0) {
-            if (self.waste.length > 0) {
-                setCardDraggable(self.waste[self.waste.length - 1], false);
-            }
             
-            (function turnOneCard(col, stock) {
-                var card = stock.pop();
-                card.style.zIndex = self.waste.length;
-                self.waste.push(card);
-                card.className = "waste card col-" + col + " face-up";
-                if (col < 3 && stock.length > 0) {
-                    setTimeout(function() { turnOneCard(col+1, stock); }, 50);
-                } else {
-                    setCardDraggable(card, true);
-                }
-            })(1, this.stock);
+        var undoList = [];
+        function undoFunction() { executeAll(undoList); }
+
+        var count = Math.min(3, self.stock.length);
+        for (var col = 1, timeout = 0; col <= count; col++, timeout += 50) {
+            var card = self.stock.pop();
+            (function(col, card) {
+                setTimeout(function() {
+                    self.dropCardOntoWaste(col, card);
+                    undoList.push(function() { self.removeCardFromPile(card); self.dropCardOntoStock(card); });
+                }, timeout);
+            })(col, card);
         }
+
+        return undoFunction;
     };
 
     /*
@@ -653,12 +864,14 @@ var SOLITAIRE = (function () {
         var target = document.elementFromPoint(event.clientX, event.clientY);
         if (target.classList.contains('target')) {
             if (target.classList.contains('stock')) {
-                this.resetStock();
+                var undoResetStock = this.resetStock();
+                this.undoList.push(undoResetStock);
             }
         } else if (target.tagName === 'IMG') {
             // Got a card
             if (target.parentNode.classList.contains("stock")) {
-                this.turnStock();
+                var undoTurnStock = this.turnStock();
+                this.undoList.push(undoTurnStock);
             }
         }
     };
