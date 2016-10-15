@@ -40,6 +40,14 @@ at
 
 `https://commons.wikimedia.org/wiki/File:Atlasnye_playing_cards_deck.svg`
 
+### Installation
+
+Copy the contents of this repository to the target directory in your web root.
+
+Now point a web browser at it.
+
+Enjoy.
+
 ### Things Left As An Exercise For The Reader
 *Or, yeah, I'll get to it tomorrow.*
 
